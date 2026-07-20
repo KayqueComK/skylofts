@@ -794,11 +794,32 @@ class BallpitBg extends HTMLElement {
             followCursor,
             colors
         });
+
+        let lastScrollY = window.scrollY;
+        this.scrollListener = () => {
+            if (!this.spheresInstance || !this.spheresInstance.spheres) return;
+            const currentScrollY = window.scrollY;
+            const scrollDelta = currentScrollY - lastScrollY;
+            lastScrollY = currentScrollY;
+            
+            const physics = this.spheresInstance.spheres.physics;
+            const forceY = scrollDelta * 0.015; 
+            
+            if (physics && physics.velocityData) {
+                for (let i = 0; i < physics.config.count; i++) {
+                    physics.velocityData[3 * i + 1] += forceY;
+                }
+            }
+        };
+        window.addEventListener('scroll', this.scrollListener, { passive: true });
     }
 
     disconnectedCallback() {
         if (this.spheresInstance) {
             this.spheresInstance.dispose();
+        }
+        if (this.scrollListener) {
+            window.removeEventListener('scroll', this.scrollListener);
         }
     }
 }
