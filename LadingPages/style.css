@@ -35,6 +35,36 @@ body {
     overflow-x: hidden;
 }
 
+/* Fix for Custom Components Overlapping */
+card-nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+card-nav > * {
+    pointer-events: auto;
+}
+
+click-spark {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    pointer-events: none;
+}
+
+gradual-blur {
+    pointer-events: none;
+    z-index: 1;
+}
+
+ballpit-bg {
+    z-index: 0;
+}
+
 
 
 h1,
@@ -229,7 +259,8 @@ h6 {
     max-width: 800px;
     margin-top: 50px;
     position: relative;
-    z-index: 10;
+    z-index: 9000;
+    pointer-events: auto;
 }
 
 .hero h1 {
