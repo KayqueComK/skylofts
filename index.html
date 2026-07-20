@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Sistema de Gestão de Equipamentos Musicais — Controle de microfones, instrumentos, cabos, mesas de som e mais.">
+    <title>Sistema de Gestão de Equipamentos</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Sora:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons — Flaticon UIcons -->
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!--  HEADER                                        -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <header class="app-header">
+        <div class="app-header__brand">
+            <h1 class="app-header__title"><i class="fi fi-rr-music-alt"></i> Gestão de Equipamentos</h1>
+            <span class="app-header__subtitle">Controle de Equipamentos Musicais</span>
+        </div>
+        <div class="app-header__right">
+            <div class="user-bar">
+                <div class="user-bar__info">
+                    <span class="user-bar__name" id="userDisplayName"></span>
+                    <span class="user-bar__role" id="userRole"></span>
+                </div>
+                <div class="user-bar__actions">
+                    <a href="admin.html" class="btn btn--sm btn--secondary" id="adminLink" style="display:none"><i class="fi fi-rr-key"></i> Admin</a>
+                    <button class="btn btn--sm btn--secondary" id="logoutBtn" type="button">Sair</button>
+                </div>
+            </div>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema">
+                <span class="theme-toggle__icon theme-toggle__icon--sun"><i class="fi fi-rr-sun"></i></span>
+                <span class="theme-toggle__icon theme-toggle__icon--moon"><i class="fi fi-rr-moon"></i></span>
+                <span class="theme-toggle__slider"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!--  MAIN CONTENT                                  -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main class="main-content">
+
+        <!-- Stats -->
+        <section class="stats-section" aria-label="Estatísticas">
+            <div class="stats-grid" id="statsGrid">
+                <!-- Renderizado por DashboardView.renderStats() -->
+            </div>
+        </section>
+
+        <!-- Controls: Search + Filters -->
+        <section class="controls-section">
+            <div class="controls-bar">
+                <div class="search-wrapper">
+                    <i class="fi fi-rr-search search-wrapper__icon"></i>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Buscar equipamento..."
+                        aria-label="Buscar equipamento">
+                </div>
+                <div class="filter-group" id="filterGroup" role="group" aria-label="Filtrar por status">
+                    <button class="filter-btn filter-btn--active" data-filter="todos" type="button">Todos</button>
+                    <button class="filter-btn" data-filter="disponivel" type="button">Disponível</button>
+                    <button class="filter-btn" data-filter="indisponivel" type="button">Indisponível</button>
+                    <button class="filter-btn" data-filter="em-uso" type="button">Em Uso</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Equipment Grid -->
+        <section class="equipment-section">
+            <div class="equipment-grid" id="equipmentGrid">
+                <!-- Renderizado por DashboardView.renderEquipments() -->
+            </div>
+            <div class="empty-state" id="emptyState">
+                <div class="empty-state__icon"><i class="fi fi-rr-music-alt"></i></div>
+                <h3 class="empty-state__title">Nenhum equipamento encontrado</h3>
+                <p class="empty-state__text">Adicione seu primeiro equipamento clicando no botão <strong>+</strong>
+                    abaixo</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!--  FAB — Add Equipment                           -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <button class="fab" id="addEquipmentBtn" type="button" aria-label="Adicionar equipamento">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round">
+            <path d="M12 5v14M5 12h14"></path>
+        </svg>
+    </button>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!--  MODAL — Equipment Form                        -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+            <!-- Header -->
+            <div class="modal__header">
+                <h2 class="modal__title" id="modalTitle">Novo Equipamento</h2>
+                <button class="modal__close" id="modalClose" type="button" aria-label="Fechar modal">&times;</button>
+            </div>
+
+            <!-- Form -->
+            <form class="modal__body" id="equipmentForm" novalidate>
+                <input type="hidden" id="eqId" name="id">
+
+                <div class="form-group">
+                    <label class="form-group__label" for="eqName">Nome do Equipamento <span
+                            class="required">*</span></label>
+                    <input type="text" class="form-group__input" id="eqName" name="name" required
+                        placeholder="Ex: Microfone Shure SM58">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-group__label" for="eqCategory">Categoria <span class="required">*</span></label>
+                    <select class="form-group__input" id="eqCategory" name="category" required>
+                        <option value="">Selecione uma categoria...</option>
+                        <option value="microfone">Microfone</option>
+                        <option value="instrumento">Instrumento Musical</option>
+                        <option value="cabo">Cabo</option>
+                        <option value="mesa-de-som">Mesa de Som</option>
+                        <option value="caixa-de-som">Caixa de Som</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-group__label" for="eqDescription">Descrição <span
+                            class="required">*</span></label>
+                    <textarea class="form-group__input" id="eqDescription" name="description" required rows="3"
+                        placeholder="Descreva o equipamento..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-group__label" for="eqStatus">Status <span class="required">*</span></label>
+                    <select class="form-group__input" id="eqStatus" name="status" required>
+                        <option value="disponivel">Disponível</option>
+                        <option value="indisponivel">Indisponível</option>
+                        <option value="em-uso">Em Uso</option>
+                    </select>
+                </div>
+
+                <!-- Campos condicionais (visíveis quando status ≠ disponível) -->
+                <div id="conditionalFields" class="conditional-fields">
+                    <div class="form-divider">
+                        <span class="form-divider__text">Informações de Uso</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-group__label" for="eqResponsible">Responsável <span
+                                class="required">*</span></label>
+                        <input type="text" class="form-group__input" id="eqResponsible" name="responsible"
+                            placeholder="Nome do responsável">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-group__label" for="eqReason">Motivo de Uso <span
+                                class="required">*</span></label>
+                        <input type="text" class="form-group__input" id="eqReason" name="reason"
+                            placeholder="Ex: Mar a Dentro, Lolek, Missa">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-group__label" for="eqEventName">Nome do Evento</label>
+                        <input type="text" class="form-group__input" id="eqEventName" name="eventName"
+                            placeholder="Ex: Improvaveis, Cura interior">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-group__label" for="eqDateStart">Data Início</label>
+                            <input type="date" class="form-group__input" id="eqDateStart" name="dateStart">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-group__label" for="eqDateEnd">Data Fim</label>
+                            <input type="date" class="form-group__input" id="eqDateEnd" name="dateEnd">
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Footer -->
+            <div class="modal__footer">
+                <button type="button" class="btn btn--secondary" id="modalCancel">Cancelar</button>
+                <button type="submit" class="btn btn--primary" id="modalSubmit" form="equipmentForm">Adicionar
+                    Equipamento</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!--  NOTIFICATION TOAST                            -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="notification" id="notification" role="alert" aria-live="polite"></div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!--  APP SCRIPT                                    -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <script type="module" src="js/app.js"></script>
+
+</body>
+
+</html>

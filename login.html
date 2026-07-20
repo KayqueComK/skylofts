@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login — Sistema de Gestão de Equipamentos Musicais">
+    <title>Login — Gestão de Equipamentos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons — Flaticon UIcons -->
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+</head>
+<body>
+    <div class="auth-page">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema">
+            <span class="theme-toggle__icon theme-toggle__icon--sun"><i class="fi fi-rr-sun"></i></span>
+            <span class="theme-toggle__icon theme-toggle__icon--moon"><i class="fi fi-rr-moon"></i></span>
+            <span class="theme-toggle__slider"></span>
+        </button>
+
+        <div class="auth-card">
+            <!-- Header -->
+            <div class="auth-card__header">
+                <h1><i class="fi fi-rr-music-alt"></i> Gestão de Equipamentos</h1>
+                <p>Controle de Equipamentos Musicais</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login" type="button">Entrar</button>
+                <button class="auth-tab" data-tab="register" type="button">Criar Conta</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form" novalidate>
+                <div class="form-group">
+                    <label class="form-group__label" for="loginUsername">Usuário</label>
+                    <input type="text" class="form-group__input" id="loginUsername" required
+                           placeholder="Digite seu usuário" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-group__label" for="loginPassword">Senha</label>
+                    <input type="password" class="form-group__input" id="loginPassword" required
+                           placeholder="Digite sua senha" autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn--primary btn--full">Entrar</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form" style="display:none" novalidate>
+                <div class="form-group">
+                    <label class="form-group__label" for="regDisplayName">Nome Completo</label>
+                    <input type="text" class="form-group__input" id="regDisplayName" required
+                           placeholder="Seu nome completo">
+                </div>
+                <div class="form-group">
+                    <label class="form-group__label" for="regUsername">Usuário</label>
+                    <input type="text" class="form-group__input" id="regUsername" required
+                           placeholder="Escolha um nome de usuário (mín. 3 caracteres)" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-group__label" for="regPassword">Senha</label>
+                    <input type="password" class="form-group__input" id="regPassword" required
+                           placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-group__label" for="regConfirmPassword">Confirmar Senha</label>
+                    <input type="password" class="form-group__input" id="regConfirmPassword" required
+                           placeholder="Repita a senha" autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn--primary btn--full">Criar Conta</button>
+            </form>
+
+            <!-- Error Display -->
+            <div class="auth-error" id="authError" role="alert"></div>
+
+            <!-- Admin hint -->
+            <div class="auth-info">
+                Conta admin padrão: <strong>admin</strong> / <strong>admin123</strong>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/login-app.js"></script>
+</body>
+</html>
