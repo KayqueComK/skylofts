@@ -982,18 +982,58 @@ footer {
 @media (max-width: 768px) {
     .nav-links {
         display: none;
-        /* simple mobile hide for now */
     }
 
     .hero h1 {
-        font-size: 48px;
+        font-size: 40px;
+    }
+
+    .hero p {
+        font-size: 16px;
+    }
+
+    .about, .gallery, .lofts, .hosts, .services, .reserve {
+        padding: 60px 20px;
+    }
+
+    .about-text h2, .gallery h2, .lofts h2, .hosts-header h2, .services-header h2, .reserve-content h2, .reviews-title {
+        font-size: 32px;
+        line-height: 1.2;
     }
 
     .about-container {
         flex-direction: column;
+        gap: 30px;
+        text-align: center;
     }
 
-    .reserve-buttons {
-        flex-direction: column;
+    .hosts-container, .services-container {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .reviews-container {
+        grid-template-columns: 1fr;
+    }
+
+    .reserve-content {
+        padding: 40px 20px;
+    }
+
+    .linktree-buttons {
+        gap: 10px;
+    }
+
+    .btn-linktree, .btn-linktree-social {
+        font-size: 16px;
+        padding: 14px 20px;
+    }
+
+    .carousel-btn {
+        display: none; /* Mobile uses native touch scroll (scroll-snap) */
+    }
+
+    .gallery-carousel, .lofts-carousel {
+        padding: 10px 0;
     }
 }
