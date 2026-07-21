@@ -670,28 +670,14 @@ function createBallpit(e, t = {}) {
   i.cameraMaxAspect = 1.5;
   i.resize();
   initialize(t);
-  const n = new y();
-  const o = new w(new a(0, 0, 1), 0);
-  const r = new a();
   let c = false;
 
   e.style.touchAction = 'auto';
   e.style.userSelect = 'none';
   e.style.webkitUserSelect = 'none';
 
-  const h = S({
-    domElement: e,
-    onMove() {
-      n.setFromCamera(h.nPosition, i.camera);
-      i.camera.getWorldDirection(o.normal);
-      n.ray.intersectPlane(o, r);
-      s.physics.center.copy(r);
-      s.config.controlSphere0 = true;
-    },
-    onLeave() {
-      s.config.controlSphere0 = false;
-    }
-  });
+  // No cursor interaction — movement is driven by scroll, gyroscope, etc.
+
   function initialize(e) {
     if (s) {
       i.clear();
@@ -719,7 +705,6 @@ function createBallpit(e, t = {}) {
       c = !c;
     },
     dispose() {
-      h.dispose();
       i.dispose();
     }
   };
@@ -729,6 +714,7 @@ class BallpitBg extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        this._listeners = [];
     }
 
     connectedCallback() {
@@ -736,7 +722,6 @@ class BallpitBg extends HTMLElement {
         const gravity = parseFloat(this.getAttribute('gravity')) || 0;
         const friction = parseFloat(this.getAttribute('friction')) || 0.9975;
         const wallBounce = parseFloat(this.getAttribute('wall-bounce')) || 0.95;
-        const followCursor = this.getAttribute('follow-cursor') !== 'false';
         
         let colors = ["#c3c3c3", "#6e4e3b", "#8C6A53"];
         try {
@@ -757,7 +742,7 @@ class BallpitBg extends HTMLElement {
                     top: 0;
                     left: 0;
                     z-index: 0;
-                    pointer-events: none; /* Allows user to click things behind the ballpit, but disables cursor interaction on balls */
+                    pointer-events: none;
                 }
                 .ballpit-container {
                     width: 100%;
@@ -774,14 +759,6 @@ class BallpitBg extends HTMLElement {
             </div>
         `;
 
-        // If follow cursor is enabled, we need pointer events. However, doing so blocks clicks to the site.
-        // We will respect follow-cursor. If false, pointer-events: none is perfect.
-        if (followCursor) {
-            this.style.pointerEvents = 'auto';
-            // Actually, we probably don't want to block the whole site.
-            // But if they explicitly enable it, we assume they want it.
-        }
-
         const canvas = this.shadowRoot.querySelector('canvas');
 
         this.spheresInstance = createBallpit(canvas, {
@@ -789,36 +766,169 @@ class BallpitBg extends HTMLElement {
             gravity,
             friction,
             wallBounce,
-            followCursor,
+            followCursor: false,
             colors
         });
 
+        this._setupScrollInteraction();
+        this._setupGyroscopeInteraction();
+        this._setupOrientationChangeInteraction();
+        this._setupResizeInteraction();
+    }
+
+    // ─── Helper to add a listener and track it for cleanup ───
+    _addListener(target, event, handler, options) {
+        target.addEventListener(event, handler, options);
+        this._listeners.push({ target, event, handler, options });
+    }
+
+    // ─── 1. SCROLL — balls react to page scrolling ───
+    _setupScrollInteraction() {
         let lastScrollY = window.scrollY;
-        this.scrollListener = () => {
-            if (!this.spheresInstance || !this.spheresInstance.spheres) return;
+        let lastScrollTime = performance.now();
+
+        const onScroll = () => {
+            if (!this.spheresInstance?.spheres) return;
+            const now = performance.now();
             const currentScrollY = window.scrollY;
             const scrollDelta = currentScrollY - lastScrollY;
+            const timeDelta = Math.max(now - lastScrollTime, 1);
             lastScrollY = currentScrollY;
-            
+            lastScrollTime = now;
+
+            // Velocity-based force: faster scroll = stronger push
+            const scrollSpeed = Math.abs(scrollDelta) / timeDelta;
+            const forceMagnitude = Math.min(scrollDelta * 0.04, 0.5);
+            const lateralSpread = scrollSpeed * 0.02;
+
             const physics = this.spheresInstance.spheres.physics;
-            const forceY = scrollDelta * 0.015; 
-            
-            if (physics && physics.velocityData) {
-                for (let i = 0; i < physics.config.count; i++) {
-                    physics.velocityData[3 * i + 1] += forceY;
-                }
+            if (!physics?.velocityData) return;
+
+            for (let i = 0; i < physics.config.count; i++) {
+                const base = 3 * i;
+                // Apply vertical force from scroll direction
+                physics.velocityData[base + 1] += forceMagnitude;
+                // Add slight random horizontal scatter for organic feel
+                physics.velocityData[base] += (Math.random() - 0.5) * lateralSpread;
             }
         };
-        window.addEventListener('scroll', this.scrollListener, { passive: true });
+
+        this._addListener(window, 'scroll', onScroll, { passive: true });
+    }
+
+    // ─── 2. GYROSCOPE — balls react to device tilt ───
+    _setupGyroscopeInteraction() {
+        let gyroPermissionGranted = false;
+        let lastBeta = 0;
+        let lastGamma = 0;
+
+        const onDeviceOrientation = (e) => {
+            if (!this.spheresInstance?.spheres) return;
+
+            // beta: front-to-back tilt (-180 to 180), gamma: left-to-right tilt (-90 to 90)
+            const beta = e.beta || 0;
+            const gamma = e.gamma || 0;
+
+            // Smooth the values to avoid jitter
+            const smoothBeta = lastBeta + (beta - lastBeta) * 0.15;
+            const smoothGamma = lastGamma + (gamma - lastGamma) * 0.15;
+            lastBeta = smoothBeta;
+            lastGamma = smoothGamma;
+
+            const physics = this.spheresInstance.spheres.physics;
+            if (!physics?.velocityData) return;
+
+            // Convert tilt angles to forces
+            // gamma → horizontal force (tilt left/right)
+            // beta → vertical force (tilt forward/back)
+            const forceX = (smoothGamma / 90) * 0.025;
+            const forceY = ((smoothBeta - 45) / 90) * 0.02; // 45° is neutral (phone held normally)
+
+            for (let i = 0; i < physics.config.count; i++) {
+                const base = 3 * i;
+                physics.velocityData[base] += forceX;
+                physics.velocityData[base + 1] -= forceY;
+            }
+        };
+
+        // iOS 13+ requires explicit permission for DeviceOrientation
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // We'll request permission on the first user tap
+            const requestPermission = () => {
+                if (gyroPermissionGranted) return;
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            gyroPermissionGranted = true;
+                            this._addListener(window, 'deviceorientation', onDeviceOrientation, { passive: true });
+                        }
+                    })
+                    .catch(console.error);
+            };
+            this._addListener(window, 'touchstart', requestPermission, { once: true, passive: true });
+        } else {
+            // Android and other browsers — just listen directly
+            this._addListener(window, 'deviceorientation', onDeviceOrientation, { passive: true });
+        }
+    }
+
+    // ─── 3. SCREEN ROTATION — burst effect when rotating device ───
+    _setupOrientationChangeInteraction() {
+        const onOrientationChange = () => {
+            if (!this.spheresInstance?.spheres) return;
+
+            const physics = this.spheresInstance.spheres.physics;
+            if (!physics?.velocityData) return;
+
+            // Apply a burst/explosion force to scatter all balls
+            for (let i = 0; i < physics.config.count; i++) {
+                const base = 3 * i;
+                const angle = Math.random() * Math.PI * 2;
+                const force = 0.08 + Math.random() * 0.12;
+                physics.velocityData[base] += Math.cos(angle) * force;
+                physics.velocityData[base + 1] += Math.sin(angle) * force;
+            }
+        };
+
+        // 'orientationchange' for mobile rotation, also listen to resize as fallback
+        if ('onorientationchange' in window) {
+            this._addListener(window, 'orientationchange', onOrientationChange);
+        }
+    }
+
+    // ─── 4. RESIZE — subtle scatter on window resize ───
+    _setupResizeInteraction() {
+        let resizeTimeout;
+        const onResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (!this.spheresInstance?.spheres) return;
+
+                const physics = this.spheresInstance.spheres.physics;
+                if (!physics?.velocityData) return;
+
+                // Gentle nudge on resize
+                for (let i = 0; i < physics.config.count; i++) {
+                    const base = 3 * i;
+                    physics.velocityData[base] += (Math.random() - 0.5) * 0.06;
+                    physics.velocityData[base + 1] += (Math.random() - 0.5) * 0.06;
+                }
+            }, 150);
+        };
+
+        this._addListener(window, 'resize', onResize, { passive: true });
     }
 
     disconnectedCallback() {
         if (this.spheresInstance) {
             this.spheresInstance.dispose();
         }
-        if (this.scrollListener) {
-            window.removeEventListener('scroll', this.scrollListener);
+        // Clean up all registered listeners
+        for (const { target, event, handler, options } of this._listeners) {
+            target.removeEventListener(event, handler, options);
         }
+        this._listeners = [];
     }
 }
 
