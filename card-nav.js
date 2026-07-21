@@ -57,7 +57,7 @@ class CardNav extends HTMLElement {
               </a>
             </div>
 
-            <a href="#reserve" target="_blank" rel="noopener noreferrer" class="card-nav-cta-button" style="background-color: ${this.buttonBgColor}; color: ${this.buttonTextColor};">
+            <a href="#reserve" class="card-nav-cta-button" style="background-color: ${this.buttonBgColor}; color: ${this.buttonTextColor};">
               Reservar Agora
             </a>
           </div>
@@ -68,7 +68,7 @@ class CardNav extends HTMLElement {
                 <div class="nav-card-label">${item.label}</div>
                 <div class="nav-card-links">
                   ${(item.links || []).map(lnk => `
-                    <a class="nav-card-link" target="_blank" rel="noopener noreferrer" href="${lnk.href || '#'}" aria-label="${lnk.ariaLabel || lnk.label}">
+                    <a class="nav-card-link" ${(lnk.href || '#').startsWith('#') ? '' : 'target="_blank" rel="noopener noreferrer"'} href="${lnk.href || '#'}" aria-label="${lnk.ariaLabel || lnk.label}">
                       ${arrowIcon}
                       ${lnk.label}
                     </a>
